@@ -1,4 +1,5 @@
 ```markdown
+
 # DevOpsFetch
 
 DevOpsFetch is a tool for retrieving and monitoring server information, designed to be easy to deploy and use with Docker.
@@ -57,13 +58,13 @@ List Docker images and containers or detailed information about a specific conta
 #### Example: List all Docker images and containers
 
 ```sh
-docker run --rm -it --name devopsfetch devopsfetch -d
+docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock --name devopsfetch devopsfetch -d
 ```
 
 #### Example: Display detailed information about a specific container (e.g., container `nginx`)
 
 ```sh
-docker run --rm -it --name devopsfetch devopsfetch -d nginx
+docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock --name devopsfetch devopsfetch -d nginx
 ```
 
 ### `-n, --nginx [domain]`
@@ -155,13 +156,13 @@ docker run --rm -it --name devopsfetch devopsfetch -p 80
 ### List all Docker images and containers
 
 ```sh
-docker run --rm -it --name devopsfetch devopsfetch -d
+docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock --name devopsfetch devopsfetch -d
 ```
 
 ### Display detailed information about the `nginx` container
 
 ```sh
-docker run --rm -it --name devopsfetch devopsfetch -d nginx
+docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock --name devopsfetch devopsfetch -d nginx
 ```
 
 ### Display all Nginx domains and their ports
@@ -204,4 +205,6 @@ docker run --rm -it --name devopsfetch devopsfetch -m
 
 ```sh
 docker run --rm -it --name devopsfetch devopsfetch -h
+```
+
 ```
