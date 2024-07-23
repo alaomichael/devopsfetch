@@ -78,24 +78,38 @@ display_nginx() {
     fi
 }
 
-# Function to display user logins
+# Function to display user logins and details
 display_users() {
-    printf "%-15s %-10s %-20s %-20s\n" "Username" "Terminal" "Login Time" "Session Duration"
-    
     if [ -n "$1" ]; then
-        log_message "Displaying user login details for $1"
-        last -w "$1" | head -n -2 | awk '{ printf "%-15s %-10s %-20s %-20s\n", $1, $2, $4" "$5" "$6, $7 }'
+        log_message "Displaying user details and login records for $1"
+        printf "%-15s %-20s %-20s %-20s\n" "Username" "Full Name" "Home Directory" "Shell"
+        
+        # Fetch user details
+        user_info=$(getent passwd "$1" | awk -F: '{ printf "%-15s %-20s %-20s %-20s\n", $1, $5, $6, $7 }')
+        if [ -n "$user_info" ]; then
+            echo "$user_info"
+            
+            printf "\n%-15s %-10s %-20s %-20s\n" "Username" "Terminal" "Login Time" "Session Duration"
+            last -w "$1" | head -n -2 | awk '{ printf "%-15s %-10s %-20s %-20s\n", $1, $2, $4" "$5" "$6, $7 }'
+        else
+            echo "No such user: $1"
+        fi
     else
         log_message "Listing all users and their last login times"
+        printf "%-15s %-20s %-20s %-20s\n" "Username" "Full Name" "Home Directory" "Shell"
         
         # List all users
-        awk -F: '{ print $1 }' /etc/passwd | while read -r user; do
-            printf "%-15s\n" "$user"
+        awk -F: '{ printf "%-15s %-20s %-20s %-20s\n", $1, $5, $6, $7 }' /etc/passwd | while read -r user_line; do
+            echo "$user_line"
+            user=$(echo "$user_line" | awk '{print $1}')
+            
             # List login records for each user
-            last -w "$user" | head -n -2 | awk '{ printf "   %-15s %-10s %-20s %-20s\n", $1, $2, $4" "$5" "$6, $7 }'
+            printf "\n%-15s %-10s %-20s %-20s\n" "Username" "Terminal" "Login Time" "Session Duration"
+            last -w "$user" | head -n -2 | awk '{ printf "%-15s %-10s %-20s %-20s\n", $1, $2, $4" "$5" "$6, $7 }'
         done
     fi
 }
+
 
 
 # Function to display activities within a specified time range
