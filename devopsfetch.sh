@@ -46,7 +46,7 @@ display_ports() {
 
 display_docker_info() {
     log_message "Listing all Docker images and containers:"
-    printf "%-15s %-30s %-20s %-10s %-10s %-20s %-30s\n" "CONTAINER ID" "IMAGE" "COMMAND" "CREATED" "STATUS" "PORTS" "NAMES"
+    printf "%-12s %-50s %-20s %-15s %-15s %-25s %-35s\n" "CONTAINER ID" "IMAGE" "COMMAND" "CREATED" "STATUS" "PORTS" "NAMES"
     sudo docker ps -a --format "table {{.ID}}\t{{.Image}}\t{{.Command}}\t{{.CreatedAt}}\t{{.Status}}\t{{.Ports}}\t{{.Names}}" | tail -n +2
 }
 
