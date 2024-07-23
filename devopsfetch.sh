@@ -17,17 +17,19 @@ display_ports() {
     if [ -z "$1" ]; then
         log_message "Listing all active ports and services:"
         echo "Netid  State  Recv-Q  Send-Q   Local Address:Port   Peer Address:Port  Process"
-        sudo ss -tunlp
+        sudo ss -tunlp | tail -n +2  # Skip the header from ss
     else
         log_message "Displaying details for port: $1"
-        sudo lsof -i :$1
+        sudo lsof -i :$1 | tail -n +2  # Skip the header from lsof
     fi
 }
 
 display_docker_info() {
     if [ -z "$1" ]; then
         log_message "Listing all Docker images and containers:"
+        echo -e "CONTAINER ID   IMAGE         COMMAND                  CREATED      STATUS       PORTS\n"
         sudo docker ps -a
+        echo -e "\nREPOSITORY    TAG       IMAGE ID       CREATED       SIZE\n"
         sudo docker images
     else
         log_message "Displaying details for Docker container: $1"
@@ -38,7 +40,7 @@ display_docker_info() {
 display_nginx_info() {
     if [ -z "$1" ]; then
         log_message "Listing all Nginx domains and their ports:"
-        sudo nginx -T 2>/dev/null | grep 'server_name\|listen'
+        sudo nginx -T 2>/dev/null | grep -E 'server_name|listen'
     else
         log_message "Displaying Nginx configuration for domain: $1"
         sudo nginx -T 2>/dev/null | awk "/server_name[[:space:]]$1/,/}/"
@@ -49,17 +51,17 @@ display_users() {
     if [ -z "$1" ]; then
         log_message "Listing all users and their last login times:"
         echo -e "Username\t\tPort\tFrom\t\tLatest"
-        lastlog
+        lastlog | tail -n +2  # Skip the header from lastlog
     else
         log_message "Displaying details for user: $1"
         echo -e "Username\t\tPort\tFrom\t\tLatest"
-        lastlog -u $1 | sed -n '2p'
+        lastlog -u $1 | tail -n +2  # Skip the header from lastlog
     fi
 }
 
 display_time_range() {
     log_message "Displaying activities from $1 to $2"
-    sudo journalctl --since="$1" --until="$2"
+    sudo journalctl --since="$1" --until="$2" | tail -n +2  # Skip the header from journalctl
 }
 
 continuous_monitoring() {
