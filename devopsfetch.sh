@@ -53,7 +53,7 @@ display_users() {
     else
         log_message "Displaying details for user: $1"
         echo -e "Username\t\tPort\tFrom\t\tLatest"
-        lastlog -u $1
+        lastlog -u $1 | sed -n '2p'
     fi
 }
 
