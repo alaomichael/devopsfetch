@@ -39,7 +39,7 @@ display_ports() {
 
 # Function to display Docker images and containers
 display_docker() {
-    printf "%-20s %-20s %-50s %-20s %-20s %-30s %-20s\n" "Container ID" "Image" "Command" "Created" "Status" "Ports" "Names"
+    # printf "%-20s %-20s %-50s %-20s %-20s %-30s %-20s\n" "Container ID" "Image" "Command" "Created" "Status" "Ports" "Names"
     if [ -n "$1" ]; then
         log_message "Displaying details for Docker container $1"
         docker ps -a --filter "name=$1" --format "table {{.ID}}\t{{.Image}}\t{{.Command}}\t{{.CreatedAt}}\t{{.Status}}\t{{.Ports}}\t{{.Names}}"
