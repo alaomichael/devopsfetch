@@ -99,13 +99,11 @@ display_users() {
         printf "%-15s %-20s %-20s %-20s\n" "Username" "Full Name" "Home Directory" "Shell"
         
         # List all users
-        awk -F: '{ printf "%-15s %-20s %-20s %-20s\n", $1, $5, $6, $7 }' /etc/passwd | while read -r user_line; do
-            echo "$user_line"
-            user=$(echo "$user_line" | awk '{print $1}')
-            
-            # List login records for each user
-            printf "\n%-15s %-10s %-20s %-20s\n" "Username" "Terminal" "Login Time" "Session Duration"
-            last -w "$user" | head -n -2 | awk '{ printf "%-15s %-10s %-20s %-20s\n", $1, $2, $4" "$5" "$6, $7 }'
+        awk -F: '{ printf "%-15s %-20s %-20s %-20s\n", $1, $5, $6, $7 }' /etc/passwd
+        
+        printf "\n%-15s %-10s %-20s %-20s\n" "Username" "Terminal" "Login Time" "Session Duration"
+        for user in $(awk -F: '{print $1}' /etc/passwd); do
+            last -w "$user" | head -n -2 | awk -v user="$user" 'NR > 1 { printf "%-15s %-10s %-20s %-20s\n", user, $2, $4" "$5" "$6, $7 }'
         done
     fi
 }
