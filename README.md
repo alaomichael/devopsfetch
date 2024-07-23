@@ -102,13 +102,6 @@ DevOpsFetch is a tool for retrieving and monitoring server information, designed
 
   ```
 
-  - **Start continuous monitoring and logging**:
-
-  ```sh
-  sudo devopsfetch.sh -m
-
-  ```
-
 #### Logging Mechanism
 
 Logs are stored in `/var/log/devopsfetch/devopsfetch.log`. Logs are rotated and managed by the script itself. To retrieve logs:
