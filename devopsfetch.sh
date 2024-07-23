@@ -27,103 +27,49 @@ get_service_by_port() {
 }
 
 display_ports() {
-    if [ -z "$1" ]; then
-        log_message "Listing all active ports and services:"
-        echo -e "Netid\t\tState\t\tRecv-Q\t\tSend-Q\t\tLocal Address:Port\t\t\tPeer Address:Port\t\t\tProcess\t\t\tService"
-        sudo ss -tunlp | awk '
-            BEGIN {
-                FS=" ";
-                OFS="\t";
-            }
-            NR > 1 {
-                service = $1;
-                for (i=1; i<=NF; i++) {
-                    if ($i ~ /:/) {
-                        local_address = $i;
-                        peer_address = $(i+1);
-                        process = $(i+2);
-                        break;
-                    }
+    log_message "Listing all active ports and services:"
+    printf "%-8s %-10s %-8s %-8s %-22s %-22s %-20s %-10s\n" "Netid" "State" "Recv-Q" "Send-Q" "Local Address:Port" "Peer Address:Port" "Process" "Service"
+    sudo ss -tunlp | awk '
+        NR > 1 {
+            service = $1;
+            for (i=1; i<=NF; i++) {
+                if ($i ~ /:/) {
+                    local_address = $i;
+                    peer_address = $(i+1);
+                    process = $(i+2);
+                    break;
                 }
-                print $1, $2, $3, $4, local_address, peer_address, process, service;
-            }'
-    else
-        log_message "Displaying details for port: $1"
-        sudo lsof -i :$1 | tail -n +2 | awk '
-            BEGIN {
-                FS=" ";
-                OFS="\t";
             }
-            NR > 1 {
-                print $1, $2, $3, $4, $5, $6, $7, $8, $9;
-            }'
-    fi
+            printf "%-8s %-10s %-8s %-8s %-22s %-22s %-20s %-10s\n", $1, $2, $3, $4, local_address, peer_address, process, service;
+        }'
 }
 
 display_docker_info() {
-    if [ -z "$1" ]; then
-        log_message "Listing all Docker images and containers:"
-        echo -e "CONTAINER ID\t\tIMAGE\t\tCOMMAND\t\tCREATED\t\tSTATUS\t\tPORTS\t\tNAMES"
-        sudo docker ps -a | awk '
-            BEGIN {
-                FS=" ";
-                OFS="\t";
-            }
-            NR > 1 {
-                print $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12;
-            }'
-    else
-        log_message "Displaying details for Docker container: $1"
-        sudo docker inspect $1 | jq '.'
-    fi
+    log_message "Listing all Docker images and containers:"
+    printf "%-15s %-30s %-20s %-10s %-10s %-20s %-30s\n" "CONTAINER ID" "IMAGE" "COMMAND" "CREATED" "STATUS" "PORTS" "NAMES"
+    sudo docker ps -a --format "table {{.ID}}\t{{.Image}}\t{{.Command}}\t{{.CreatedAt}}\t{{.Status}}\t{{.Ports}}\t{{.Names}}" | tail -n +2
 }
 
 display_nginx_info() {
-    if [ -z "$1" ]; then
-        log_message "Listing all Nginx domains and their ports:"
-        sudo nginx -T 2>/dev/null | grep -E 'server_name|listen'
-    else
-        log_message "Displaying Nginx configuration for domain: $1"
-        sudo nginx -T 2>/dev/null | awk "/server_name[[:space:]]$1/,/}/"
-    fi
+    log_message "Listing all Nginx domains and their ports:"
+    sudo nginx -T 2>/dev/null | grep -E 'server_name|listen' | awk '
+        /server_name/ { domain=$2; getline; print domain, $2 }'
 }
 
 display_users() {
-    if [ -z "$1" ]; then
-        log_message "Listing all users and their last login times:"
-        echo -e "Username\t\tPort\t\tFrom\t\tLatest"
-        lastlog | tail -n +2 | awk '
-            BEGIN {
-                FS=" ";
-                OFS="\t";
-            }
-            NR > 1 {
-                print $1, $2, $3, $4;
-            }'
-    else
-        log_message "Displaying details for user: $1"
-        echo -e "Username\t\tPort\t\tFrom\t\tLatest"
-        lastlog -u $1 | tail -n +2 | awk '
-            BEGIN {
-                FS=" ";
-                OFS="\t";
-            }
-            NR > 1 {
-                print $1, $2, $3, $4;
-            }'
-    fi
+    log_message "Listing all users and their last login times:"
+    printf "%-20s %-8s %-20s %-30s\n" "Username" "Port" "From" "Latest"
+    lastlog | tail -n +2 | awk '
+        NR > 1 {
+            printf "%-20s %-8s %-20s %-30s\n", $1, $2, $3, $4;
+        }'
 }
 
 display_time_range() {
     log_message "Displaying activities from $1 to $2"
     sudo journalctl --since="$1" --until="$2" | tail -n +2 | awk '
-        BEGIN {
-            FS=" ";
-            OFS="\t";
-            print "TIME", "MESSAGE";
-        }
         NR > 1 {
-            print $1, $2;
+            printf "%-20s %-100s\n", $1, $2;
         }'
 }
 
@@ -142,10 +88,10 @@ show_help() {
     echo "Usage: $0 [OPTIONS]"
     echo ""
     echo "Options:"
-    echo "  -p, --port [PORT_NUMBER]     Display all active ports or details for a specific port"
-    echo "  -d, --docker [CONTAINER]     List all Docker images and containers or details for a specific container"
-    echo "  -n, --nginx [DOMAIN]         List all Nginx domains and their ports or details for a specific domain"
-    echo "  -u, --users [USERNAME]       List all users and their last login times or details for a specific user"
+    echo "  -p, --port                   Display all active ports and services"
+    echo "  -d, --docker                 List all Docker images and containers"
+    echo "  -n, --nginx                  List all Nginx domains and their ports"
+    echo "  -u, --users                  List all users and their last login times"
     echo "  -t, --time [START] [END]     Display activities within a specified time range"
     echo "  -m, --monitor                Start continuous monitoring and logging"
     echo "  -h, --help                   Show this help message"
@@ -153,16 +99,16 @@ show_help() {
 
 case "$1" in
     -p|--port)
-        display_ports $2
+        display_ports
         ;;
     -d|--docker)
-        display_docker_info $2
+        display_docker_info
         ;;
     -n|--nginx)
-        display_nginx_info $2
+        display_nginx_info
         ;;
     -u|--users)
-        display_users $2
+        display_users
         ;;
     -t|--time)
         display_time_range $2 $3
