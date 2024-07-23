@@ -22,8 +22,8 @@ DevOpsFetch is a tool for retrieving and monitoring server information, designed
 1. **Download the scripts**:
 
    ```sh
-   wget <URL_to_devopsfetch.sh>
-   wget <URL_to_setup.sh>
+   wget https://github.com/alaomichael/devopsfetch/blob/main/devopsfetch.sh
+   wget https://github.com/alaomichael/devopsfetch/blob/main/setup.sh
    ```
 
 2. **Make the scripts executable**:
