@@ -22,33 +22,40 @@ log_message() {
 # Function to get service name by port
 get_service_by_port() {
     local port=$1
-    local service=$(sudo netstat -tuln | grep ":$port " | awk '{print $1}')
+    local service=$(sudo ss -tunlp | grep ":$port " | awk '{print $1}')
     echo $service
 }
 
 display_ports() {
     if [ -z "$1" ]; then
         log_message "Listing all active ports and services:"
-        echo "Netid    State      Recv-Q Send-Q   Local Address:Port       Peer Address:Port  Process"
+        echo -e "Netid\t\tState\t\tRecv-Q\t\tSend-Q\t\tLocal Address:Port\t\t\tPeer Address:Port\t\t\tProcess\t\t\tService"
         sudo ss -tunlp | awk '
-            BEGIN { 
-                FS=" "; 
-                OFS="\t"; 
-                print "Netid", "State", "Recv-Q", "Send-Q", "Local Address:Port", "Peer Address:Port", "Process"; 
-            } 
-            NR > 1 { 
-                print $1, $2, $3, $4, $5, $6, $7; 
+            BEGIN {
+                FS=" ";
+                OFS="\t";
+            }
+            NR > 1 {
+                service = $1;
+                for (i=1; i<=NF; i++) {
+                    if ($i ~ /:/) {
+                        local_address = $i;
+                        peer_address = $(i+1);
+                        process = $(i+2);
+                        break;
+                    }
+                }
+                print $1, $2, $3, $4, local_address, peer_address, process, service;
             }'
     else
         log_message "Displaying details for port: $1"
         sudo lsof -i :$1 | tail -n +2 | awk '
-            BEGIN { 
-                FS=" "; 
-                OFS="\t"; 
-                print "COMMAND", "PID", "USER", "FD", "TYPE", "DEVICE", "SIZE/OFF", "NODE", "NAME"; 
-            } 
-            NR > 1 { 
-                print $1, $2, $3, $4, $5, $6, $7, $8, $9; 
+            BEGIN {
+                FS=" ";
+                OFS="\t";
+            }
+            NR > 1 {
+                print $1, $2, $3, $4, $5, $6, $7, $8, $9;
             }'
     fi
 }
@@ -56,15 +63,14 @@ display_ports() {
 display_docker_info() {
     if [ -z "$1" ]; then
         log_message "Listing all Docker images and containers:"
-        echo -e "CONTAINER ID\tIMAGE\tCOMMAND\tCREATED\tSTATUS\tPORTS\tNAMES"
+        echo -e "CONTAINER ID\t\tIMAGE\t\tCOMMAND\t\tCREATED\t\tSTATUS\t\tPORTS\t\tNAMES"
         sudo docker ps -a | awk '
-            BEGIN { 
-                FS=" "; 
-                OFS="\t"; 
-                print "CONTAINER ID", "IMAGE", "COMMAND", "CREATED", "STATUS", "PORTS", "NAMES"; 
-            } 
-            NR > 1 { 
-                print $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12; 
+            BEGIN {
+                FS=" ";
+                OFS="\t";
+            }
+            NR > 1 {
+                print $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12;
             }'
     else
         log_message "Displaying details for Docker container: $1"
@@ -85,27 +91,25 @@ display_nginx_info() {
 display_users() {
     if [ -z "$1" ]; then
         log_message "Listing all users and their last login times:"
-        echo -e "Username\tPort\tFrom\tLatest"
+        echo -e "Username\t\tPort\t\tFrom\t\tLatest"
         lastlog | tail -n +2 | awk '
-            BEGIN { 
-                FS=" "; 
-                OFS="\t"; 
-                print "Username", "Port", "From", "Latest"; 
-            } 
-            NR > 1 { 
-                print $1, $2, $3, $4; 
+            BEGIN {
+                FS=" ";
+                OFS="\t";
+            }
+            NR > 1 {
+                print $1, $2, $3, $4;
             }'
     else
         log_message "Displaying details for user: $1"
-        echo -e "Username\tPort\tFrom\tLatest"
+        echo -e "Username\t\tPort\t\tFrom\t\tLatest"
         lastlog -u $1 | tail -n +2 | awk '
-            BEGIN { 
-                FS=" "; 
-                OFS="\t"; 
-                print "Username", "Port", "From", "Latest"; 
-            } 
-            NR > 1 { 
-                print $1, $2, $3, $4; 
+            BEGIN {
+                FS=" ";
+                OFS="\t";
+            }
+            NR > 1 {
+                print $1, $2, $3, $4;
             }'
     fi
 }
@@ -113,13 +117,13 @@ display_users() {
 display_time_range() {
     log_message "Displaying activities from $1 to $2"
     sudo journalctl --since="$1" --until="$2" | tail -n +2 | awk '
-        BEGIN { 
-            FS=" "; 
-            OFS="\t"; 
-            print "TIME", "MESSAGE"; 
-        } 
-        NR > 1 { 
-            print $1, $2; 
+        BEGIN {
+            FS=" ";
+            OFS="\t";
+            print "TIME", "MESSAGE";
+        }
+        NR > 1 {
+            print $1, $2;
         }'
 }
 
