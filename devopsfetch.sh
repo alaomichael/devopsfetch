@@ -27,42 +27,66 @@ get_service_by_port() {
 }
 
 display_ports() {
-    log_message "Listing all active ports and services:"
-    printf "%-8s %-10s %-8s %-8s %-22s %-22s %-20s %-10s\n" "Netid" "State" "Recv-Q" "Send-Q" "Local Address:Port" "Peer Address:Port" "Process" "Service"
-    sudo ss -tunlp | awk '
-        NR > 1 {
-            service = $1;
-            for (i=1; i<=NF; i++) {
-                if ($i ~ /:/) {
-                    local_address = $i;
-                    peer_address = $(i+1);
-                    process = $(i+2);
-                    break;
+    if [ -n "$1" ]; then
+        log_message "Displaying details for port $1"
+        sudo ss -tunlp | grep ":$1 "
+    else
+        log_message "Listing all active ports and services:"
+        printf "%-8s %-10s %-8s %-8s %-22s %-22s %-20s %-10s\n" "Netid" "State" "Recv-Q" "Send-Q" "Local Address:Port" "Peer Address:Port" "Process" "Service"
+        sudo ss -tunlp | awk '
+            NR > 1 {
+                service = $1;
+                for (i=1; i<=NF; i++) {
+                    if ($i ~ /:/) {
+                        local_address = $i;
+                        peer_address = $(i+1);
+                        process = $(i+2);
+                        break;
+                    }
                 }
-            }
-            printf "%-8s %-10s %-8s %-8s %-22s %-22s %-20s %-10s\n", $1, $2, $3, $4, local_address, peer_address, process, service;
-        }'
+                printf "%-8s %-10s %-8s %-8s %-22s %-22s %-20s %-10s\n", $1, $2, $3, $4, local_address, peer_address, process, service;
+            }'
+    fi
 }
 
 display_docker_info() {
-    log_message "Listing all Docker images and containers:"
-    printf "%-12s %-50s %-20s %-15s %-15s %-25s %-35s\n" "CONTAINER ID" "IMAGE" "COMMAND" "CREATED" "STATUS" "PORTS" "NAMES"
-    sudo docker ps -a --format "table {{.ID}}\t{{.Image}}\t{{.Command}}\t{{.CreatedAt}}\t{{.Status}}\t{{.Ports}}\t{{.Names}}" | tail -n +2
+    if [ -n "$1" ]; then
+        log_message "Displaying details for container name $1:"
+        printf "%-20s %-20s %-20s %-10s %-10s %-20s %-20s %-30s\n" "CONTAINER NAME" "IMAGE" "STATUS" "CREATED" "PORTS" "COMMAND" "STATE" "MOUNTS"
+        sudo docker inspect --format '
+            {{printf "%-20s %-20s %-20s %-10s %-10s %-20s %-20s %-30s" .Name .Config.Image .State.Status .Created .NetworkSettings.Ports .Config.Cmd .State .Mounts}}' $(sudo docker ps -aqf "name=$1")
+    else
+        log_message "Listing all Docker images and containers:"
+        printf "%-20s %-30s %-20s %-10s %-10s %-20s %-30s\n" "CONTAINER NAME" "IMAGE" "COMMAND" "CREATED" "STATUS" "PORTS" "NAMES"
+        sudo docker ps -a --format "table {{.Names}}\t{{.Image}}\t{{.Command}}\t{{.CreatedAt}}\t{{.Status}}\t{{.Ports}}\t{{.Names}}" | tail -n +2
+    fi
 }
 
 display_nginx_info() {
-    log_message "Listing all Nginx domains and their ports:"
-    sudo nginx -T 2>/dev/null | grep -E 'server_name|listen' | awk '
-        /server_name/ { domain=$2; getline; print domain, $2 }'
+    if [ -n "$1" ]; then
+        log_message "Displaying details for domain $1:"
+        sudo nginx -T 2>/dev/null | awk -v domain=$1 '
+            /server_name/ { domain_name=$2 }
+            /listen/ && domain_name == domain { print $0 }'
+    else
+        log_message "Listing all Nginx domains and their ports:"
+        sudo nginx -T 2>/dev/null | grep -E 'server_name|listen' | awk '
+            /server_name/ { domain=$2; getline; print domain, $2 }'
+    fi
 }
 
 display_users() {
-    log_message "Listing all users and their last login times:"
-    printf "%-20s %-8s %-20s %-30s\n" "Username" "Port" "From" "Latest"
-    lastlog | tail -n +2 | awk '
-        NR > 1 {
-            printf "%-20s %-8s %-20s %-30s\n", $1, $2, $3, $4;
-        }'
+    if [ -n "$1" ]; then
+        log_message "Displaying details for user $1:"
+        lastlog -u $1
+    else
+        log_message "Listing all users and their last login times:"
+        printf "%-20s %-8s %-20s %-30s\n" "Username" "Port" "From" "Latest"
+        lastlog | tail -n +2 | awk '
+            NR > 1 {
+                printf "%-20s %-8s %-20s %-30s\n", $1, $2, $3, $4;
+            }'
+    fi
 }
 
 display_time_range() {
@@ -88,27 +112,27 @@ show_help() {
     echo "Usage: $0 [OPTIONS]"
     echo ""
     echo "Options:"
-    echo "  -p, --port                   Display all active ports and services"
-    echo "  -d, --docker                 List all Docker images and containers"
-    echo "  -n, --nginx                  List all Nginx domains and their ports"
-    echo "  -u, --users                  List all users and their last login times"
-    echo "  -t, --time [START] [END]     Display activities within a specified time range"
-    echo "  -m, --monitor                Start continuous monitoring and logging"
-    echo "  -h, --help                   Show this help message"
+    echo "  -p, --port [PORT_NUMBER]       Display all active ports and services or details for a specific port"
+    echo "  -d, --docker [CONTAINER_NAME]  List all Docker images and containers or details for a specific container"
+    echo "  -n, --nginx [DOMAIN]           List all Nginx domains and their ports or details for a specific domain"
+    echo "  -u, --users [USERNAME]         List all users and their last login times or details for a specific user"
+    echo "  -t, --time [START] [END]       Display activities within a specified time range"
+    echo "  -m, --monitor                  Start continuous monitoring and logging"
+    echo "  -h, --help                     Show this help message"
 }
 
 case "$1" in
     -p|--port)
-        display_ports
+        display_ports $2
         ;;
     -d|--docker)
-        display_docker_info
+        display_docker_info $2
         ;;
     -n|--nginx)
-        display_nginx_info
+        display_nginx_info $2
         ;;
     -u|--users)
-        display_users
+        display_users $2
         ;;
     -t|--time)
         display_time_range $2 $3
@@ -123,4 +147,3 @@ case "$1" in
         echo "Invalid option. Use -h or --help for usage information."
         ;;
 esac
-

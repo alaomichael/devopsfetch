@@ -17,194 +17,102 @@ DevOpsFetch is a tool for retrieving and monitoring server information, designed
 - Display activities within a specified time range.
 - Continuous monitoring and logging of server activities.
 
-## Installation
+#### Installation and Configuration Steps
 
-### Build the Docker Image
+1. **Download the scripts**:
 
-```sh
-docker build -t devopsfetch .
-```
+   ```sh
+   wget <URL_to_devopsfetch.sh>
+   wget <URL_to_setup.sh>
+   ```
 
-### Run the Container
+2. **Make the scripts executable**:
 
-```sh
-docker run --rm -it --name devopsfetch devopsfetch [OPTIONS]
-```
+   ```sh
+   chmod +x devopsfetch.sh
+   chmod +x setup.sh
+   ```
 
-Replace `[OPTIONS]` with the desired options as described below.
+3. **Run the installation script**:
 
-## Options
+   ```sh
+   sudo ./setup.sh
+   ```
 
-### `-p, --port [port_number]`
+#### Usage Examples
 
-Display all active ports or detailed information about a specific port.
+- **Display all active ports and services**:
 
-#### Example: Display all active ports
+  ```sh
+  sudo devopsfetch.sh -p
+  ```
 
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -p
-```
+- **Display detailed information about a specific port**:
 
-#### Example: Display detailed information about a specific port (e.g., port 80)
+  ```sh
+  sudo devopsfetch.sh -p <port_number>
+  ```
 
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -p 80
-```
+- **List all Docker images and containers**:
 
-### `-d, --docker [container]`
+  ```sh
+  sudo devopsfetch.sh -d
+  ```
 
-List Docker images and containers or detailed information about a specific container.
+- **Display detailed information about a specific Docker container**:
 
-#### Example: List all Docker images and containers
+  ```sh
+  sudo devopsfetch.sh -d <container_name>
+  ```
 
-```sh
-docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock --name devopsfetch devopsfetch -d
-```
+- **Display all Nginx domains and their ports**:
 
-#### Example: Display detailed information about a specific container (e.g., container `nginx`)
+  ```sh
+  sudo devopsfetch.sh -n
+  ```
 
-```sh
-docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock --name devopsfetch devopsfetch -d nginx
-```
+- **Display detailed configuration information for a specific domain**:
 
-### `-n, --nginx [domain]`
+  ```sh
+  sudo devopsfetch.sh -n <domain>
+  ```
 
-Display all Nginx domains and ports or detailed information about a specific domain.
+- **List all users and their last login times**:
 
-#### Example: Display all Nginx domains and their ports
+  ```sh
+  sudo devopsfetch.sh -u
+  ```
 
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -n
-```
+- **Provide detailed information about a specific user**:
 
-#### Example: Display detailed configuration information for a specific domain (e.g., `example.com`)
+  ```sh
+  sudo devopsfetch.sh -u <username>
+  ```
 
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -n example.com
-```
+- **Display activities within a specified time range**:
 
-### `-u, --users [username]`
+    ```sh
+    sudo devopsfetch.sh -t <start_time> <end_time>
+    ```
 
-List all users and their last login times or detailed information about a specific user.
+- **Start continuous monitoring and logging**:
 
-#### Example: List all users and their last login times
+  ```sh
+  sudo devopsfetch.sh -m
 
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -u
-```
+  ```
 
-#### Example: Display detailed information about a specific user (e.g., `john`)
+  - **Start continuous monitoring and logging**:
 
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -u john
-```
+  ```sh
+  sudo devopsfetch.sh -m
 
-### `-t, --time [start] [end]`
+  ```
 
-Display activities within a specified time range.
+#### Logging Mechanism
 
-#### Example: Display activities from `2023-07-01` to `2023-07-21`
-
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -t "2023-07-01" "2023-07-21"
-```
-
-### `-m, --monitor`
-
-Start continuous monitoring and logging of server activities.
-
-#### Example: Start continuous monitoring and logging
+Logs are stored in `/var/log/devopsfetch/devopsfetch.log`. Logs are rotated and managed by the script itself. To retrieve logs:
 
 ```sh
-docker run --rm -it --name devopsfetch devopsfetch -m
-```
-
-### `-h, --help`
-
-Show the help message with usage instructions.
-
-#### Example: Display the help message
-
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -h
-```
-
-## Logging
-
-When using the `-m` or `--monitor` option, DevOpsFetch will log activities to `/var/log/devopsfetch.log`. Log rotation is configured to ensure logs are rotated daily and up to 7 rotated logs are kept. Logs are compressed to save space.
-
-## Example Commands
-
-### Build the Docker Image
-
-```sh
-docker build -t devopsfetch .
-```
-
-### List all active ports
-
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -p
-```
-
-### Display detailed information about port 80
-
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -p 80
-```
-
-### List all Docker images and containers
-
-```sh
-docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock --name devopsfetch devopsfetch -d
-```
-
-### Display detailed information about the `nginx` container
-
-```sh
-docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock --name devopsfetch devopsfetch -d nginx
-```
-
-### Display all Nginx domains and their ports
-
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -n
-```
-
-### Display detailed configuration for the domain `example.com`
-
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -n example.com
-```
-
-### List all users and their last login times
-
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -u
-```
-
-### Display detailed information about the user `john`
-
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -u john
-```
-
-### Display activities from `2023-07-01` to `2023-07-21`
-
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -t "2023-07-01" "2023-07-21"
-```
-
-### Start continuous monitoring and logging
-
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -m
-```
-
-### Display the help message
-
-```sh
-docker run --rm -it --name devopsfetch devopsfetch -h
-```
-
+sudo cat /var/log/devopsfetch/devopsfetch.log
 ```
