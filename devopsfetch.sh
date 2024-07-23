@@ -27,12 +27,20 @@ get_service_by_port() {
 }
 
 display_ports() {
+    # Function to print the header
+    print_header() {
+        printf "%-8s %-10s %-8s %-8s %-22s %-22s %-20s %-10s\n" \
+               "Netid" "State" "Recv-Q" "Send-Q" "Local Address:Port" \
+               "Peer Address:Port" "Process" "Service"
+    }
+
+    print_header  # Print the header once
+
     if [ -n "$1" ]; then
         log_message "Displaying details for port $1"
         sudo ss -tunlp | grep ":$1 "
     else
         log_message "Listing all active ports and services:"
-        printf "%-8s %-10s %-8s %-8s %-22s %-22s %-20s %-10s\n" "Netid" "State" "Recv-Q" "Send-Q" "Local Address:Port" "Peer Address:Port" "Process" "Service"
         sudo ss -tunlp | awk '
             NR > 1 {
                 service = $1;
@@ -49,12 +57,13 @@ display_ports() {
     fi
 }
 
+
 display_docker_info() {
     if [ -n "$1" ]; then
         log_message "Displaying details for container name $1:"
-        printf "%-13s %-30s %-25s %-15s %-15s %-25s %-25s %-35s\n" "CONTAINER NAME" "IMAGE" "STATUS" "CREATED" "PORTS" "COMMAND" "STATE" "MOUNTS"
+        printf "%-30s %-30s %-20s %-10s %-10s %-30s %-20s %-30s\n" "CONTAINER NAME" "IMAGE" "STATUS" "CREATED" "PORTS" "COMMAND" "STATE" "MOUNTS"
         sudo docker inspect --format '
-            {{printf "%-13s %-30s %-25s %-15s %-15s %-25s %-25s %-35s" .Name .Config.Image .State.Status .Created .NetworkSettings.Ports .Config.Cmd .State .Mounts}}' $(sudo docker ps -aqf "name=$1")
+            {{printf "%-30s %-30s %-20s %-10s %-10s %-30s %-20s %-30s" .Name .Config.Image .State.Status .Created .NetworkSettings.Ports .Config.Cmd .State .Mounts}}' $(sudo docker ps -aqf "name=$1")
     else
         log_message "Listing all Docker images and containers:"
         printf "%-20s %-30s %-20s %-10s %-10s %-20s %-30s\n" "CONTAINER NAME" "IMAGE" "COMMAND" "CREATED" "STATUS" "PORTS" "NAMES"
